@@ -1,0 +1,52 @@
+name: Build Qt6
+
+on:
+  workflow_dispatch
+
+jobs:
+  BuildQtWindows:
+    runs-on: windows-2019
+    strategy:
+      matrix:
+        qt_version: [6.5.0]
+        arch: [64]
+        strawberry: [5.32.1.1]
+      fail-fast: true
+    steps:
+    - name: Setup Strawberry ${{ matrix.strawberry }} ${{ matrix.arch }}
+      run: |
+        rm -r C:/Strawberry/*
+        Invoke-WebRequest https://strawberryperl.com/download/${{ matrix.strawberry }}/strawberry-perl-${{ matrix.strawberry }}-${{ matrix.arch }}bit-portable.zip -OutFile strawberry.zip
+        7z.exe x strawberry.zip -o"C:/Strawberry"
+        rm strawberry.zip
+        perl --version
+    - name: Install Python 3.10 version
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        architecture: 'x64'
+    - name: Setup cmake
+      uses: jwlawson/actions-setup-cmake@v1.13
+    - name: Compile Qt
+      run: |
+        # Clone Qt6 repo
+        $WORD_DIR = (Get-Location).Path
+        cd ..
+        git  clone --recursive https://github.com/cool2528/qt6.git -b ${{ matrix.qt_version }}
+        cd qt6
+        # Create shadow build folder
+        cd ..
+        mkdir qt_build_${{ matrix.arch }}
+        cd qt_build_${{ matrix.arch }}
+        # Setup the compiler
+        cmd.exe /c "call `"C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars${{ matrix.arch }}.bat`" && set > %temp%\vcvars.txt"
+        Get-Content "$env:temp\vcvars.txt" | Foreach-Object { if ($_ -match "^(.*?)=(.*)$") { Set-Content "env:\$($matches[1])" $matches[2] } }
+        # Configure Qt
+        ..\qt6\configure.bat -prefix "${WORD_DIR}\qt6${{ matrix.qt_version }}_binaries_${{ matrix.arch }}" -debug-and-release
+        cmake --build . --parallel
+        cmake --install .
+    - uses: actions/upload-artifact@v3
+      with:
+        name: qt6${{ matrix.qt_version }}_binaries_${{ matrix.arch }}_windows.zip
+        path: qt6${{ matrix.qt_version }}_binaries_${{ matrix.arch }}
+        if-no-files-found: error
