@@ -32,7 +32,7 @@ jobs:
         # Clone Qt6 repo
         $WORD_DIR = (Get-Location).Path
         cd ..
-        git  clone --recursive https://github.com/cool2528/qt6.git -b ${{ matrix.qt_version }}
+        git  clone --recursive https://code.qt.io/qt/qt5.git -b ${{ matrix.qt_version }}
         cd qt6
         # Create shadow build folder
         cd ..
