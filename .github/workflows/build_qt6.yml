@@ -33,7 +33,7 @@ jobs:
         $WORD_DIR = (Get-Location).Path
         cd ..
         git  clone --recursive https://code.qt.io/qt/qt5.git -b ${{ matrix.qt_version }}
-        cd qt6
+        cd qt5
         # Create shadow build folder
         cd ..
         mkdir qt_build_${{ matrix.arch }}
@@ -42,11 +42,11 @@ jobs:
         cmd.exe /c "call `"C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars${{ matrix.arch }}.bat`" && set > %temp%\vcvars.txt"
         Get-Content "$env:temp\vcvars.txt" | Foreach-Object { if ($_ -match "^(.*?)=(.*)$") { Set-Content "env:\$($matches[1])" $matches[2] } }
         # Configure Qt
-        ..\qt6\configure.bat -prefix "${WORD_DIR}\qt6${{ matrix.qt_version }}_binaries_${{ matrix.arch }}" -debug-and-release
+        ..\qt5\configure.bat -prefix "${WORD_DIR}\qt5${{ matrix.qt_version }}_binaries_${{ matrix.arch }}" -debug-and-release
         cmake --build . --parallel
         cmake --install .
     - uses: actions/upload-artifact@v3
       with:
-        name: qt6${{ matrix.qt_version }}_binaries_${{ matrix.arch }}_windows.zip
-        path: qt6${{ matrix.qt_version }}_binaries_${{ matrix.arch }}
+        name: qt5${{ matrix.qt_version }}_binaries_${{ matrix.arch }}_windows.zip
+        path: qt5${{ matrix.qt_version }}_binaries_${{ matrix.arch }}
         if-no-files-found: error
